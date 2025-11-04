@@ -76,14 +76,14 @@ __download_github_common() {
 setup_libiio() {
 	[ ! -d "work/libiio" ] || return 0
 
-	__download_github_common libiio
+	git clone https://github.com/analogdevicesinc/libiio.git -b libiio-v0 work/libiio
 	__download_github_common libad9361-iio
 
 	pushd work
 	mkdir -p libiio/build
 	pushd libiio/build
 
-	cmake ../ -DPYTHON_BINDINGS=ON
+	cmake .. -DPYTHON_BINDINGS=ON
 	make -j3
 	sudo make install
 
@@ -119,9 +119,7 @@ setup_pyadi-iio() {
 #removed the if
 
 	__download_github_common pyadi-iio
-	#Set python3 as default
-	sudo update-alternatives --install /usr/bin/python python /usr/bin/python2.7 1
-	sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.7 2
+	sudo apt-get install python3
 
 	pushd work
 	pushd pyadi-iio
@@ -148,9 +146,8 @@ setup_telemetry() {
 	pushd work
 	pushd telemetry
 	
-	sudo python3 setup.py build
-	sudo python3 setup.py install
 	sudo python3 -m pip install -r requirements.txt
+    sudo python3 -m pip install .
 
 	popd
 	popd
@@ -392,8 +389,29 @@ dhcp-range=192.168.0.100,192.168.0.150,24h
 	EOF
 }
 
-
 ## Board Function Area ##
+
+setup_HOCKEY-PUCK() {
+	sudo apt-get install inotify-tools
+	sudo apt install rsync
+
+    sudo_required
+    
+    cat >> /etc/dhcpcd.conf <<-EOF
+# --- added by setup_env.sh
+#DHCP server active for eth1 interface
+interface eth1
+
+#DHCP server not active for wlan0
+no-dhcp-interface = wlan0
+
+# IP addresses and routes
+static ip_address=192.168.0.100/24
+static routes=192.168.0.60/32
+# --- end setup_env.sh
+	EOF
+}
+
 setup_APARD-SPOE(){
 	:
 }
@@ -411,6 +429,7 @@ setup_GMSL716MIPI() {
 setup_ETH2GMSL() {
 	# ADD MARVEL DRIVER 
 	#SCP -R ~production-tests analog@kria-gmsl.local:/home/analog
+	:
 }
 
 setup_T1L-2-USB() {
@@ -449,7 +468,6 @@ setup_FMCOMMS2-3() {
 	setup_pyadi-iio
 }
 
-
 setup_FMCOMMS4() {
 	setup_pyadi-iio
 }
@@ -457,7 +475,6 @@ setup_FMCOMMS4() {
 setup_SYNCHRONA() {
 		:
 }
-
 
 setup_ADRV9361_BOB() {
 	setup_pyadi-iio
